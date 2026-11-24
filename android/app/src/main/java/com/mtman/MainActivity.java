@@ -132,7 +132,7 @@ public class MainActivity extends Activity {
             setStatus("Not a directory: " + path);
             return;
         }
-        String json = nativeListDir(path);
+        String json = listDir(path);
         entries.clear();
         adapter.clear();
         try {
@@ -197,11 +197,11 @@ public class MainActivity extends Activity {
         String name = f.getName().toLowerCase();
         String json;
         if (name.endsWith(".apk")) {
-            json = nativeApkInfo(p);
+            json = apkInfo(p);
         } else if (name.endsWith(".dex")) {
-            json = nativeDexInfo(p);
+            json = dexInfo(p);
         } else if (name.equals("resources.arsc")) {
-            json = nativeArscInfo(p);
+            json = arscInfo(p);
         } else {
             setStatus("No inspector for " + f.getName());
             return;
@@ -210,15 +210,11 @@ public class MainActivity extends Activity {
         Toast.makeText(this, json, Toast.LENGTH_LONG).show();
     }
 
-    // ---- Rust bindings (libmtman.so) ----
+    // ---- Rust bindings live in Jni (see Jni.java) ----
 
-    public native String nativeGreeting();
-
-    public native String nativeListDir(String path);
-
-    public native String nativeApkInfo(String path);
-
-    public native String nativeDexInfo(String path);
-
-    public native String nativeArscInfo(String path);
+    private static String greeting() { return Jni.greeting(); }
+    private static String listDir(String p) { return Jni.listDir(p); }
+    private static String apkInfo(String p) { return Jni.apkInfo(p); }
+    private static String dexInfo(String p) { return Jni.dexInfo(p); }
+    private static String arscInfo(String p) { return Jni.arscInfo(p); }
 }

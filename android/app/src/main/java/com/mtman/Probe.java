@@ -26,21 +26,21 @@ public class Probe extends Activity {
         String apk = getPackageCodePath();
 
         line(tv, "=== greeting ===");
-        try { line(tv, nativeGreeting()); } catch (Throwable t) { line(tv, "ERR " + t); }
+        try { line(tv, greeting()); } catch (Throwable t) { line(tv, "ERR " + t); }
 
         line(tv, "=== listDir " + sdcard + " ===");
-        try { line(tv, nativeListDir(sdcard)); } catch (Throwable t) { line(tv, "ERR " + t); }
+        try { line(tv, listDir(sdcard)); } catch (Throwable t) { line(tv, "ERR " + t); }
 
         line(tv, "=== listDir /sdcard ===");
-        try { line(tv, nativeListDir("/sdcard")); } catch (Throwable t) { line(tv, "ERR " + t); }
+        try { line(tv, listDir("/sdcard")); } catch (Throwable t) { line(tv, "ERR " + t); }
 
         line(tv, "=== apkInfo (self) ===");
-        try { line(tv, nativeApkInfo(apk)); } catch (Throwable t) { line(tv, "ERR " + t); }
+        try { line(tv, apkInfo(apk)); } catch (Throwable t) { line(tv, "ERR " + t); }
 
         java.io.File dex = asset("classes.dex");
         line(tv, "=== dexInfo ===");
         if (dex != null) {
-            try { line(tv, nativeDexInfo(dex.getAbsolutePath())); } catch (Throwable t) { line(tv, "ERR " + t); }
+            try { line(tv, dexInfo(dex.getAbsolutePath())); } catch (Throwable t) { line(tv, "ERR " + t); }
         } else {
             line(tv, "classes.dex not found in " + getExternalFilesDir(null));
         }
@@ -48,7 +48,7 @@ public class Probe extends Activity {
         java.io.File arsc = asset("resources.arsc");
         line(tv, "=== arscInfo ===");
         if (arsc != null) {
-            try { line(tv, nativeArscInfo(arsc.getAbsolutePath())); } catch (Throwable t) { line(tv, "ERR " + t); }
+            try { line(tv, arscInfo(arsc.getAbsolutePath())); } catch (Throwable t) { line(tv, "ERR " + t); }
         } else {
             line(tv, "resources.arsc not found in " + getExternalFilesDir(null));
         }
@@ -70,9 +70,10 @@ public class Probe extends Activity {
         return f.isFile() ? f : null;
     }
 
-    public native String nativeGreeting();
-    public native String nativeListDir(String path);
-    public native String nativeApkInfo(String path);
-    public native String nativeDexInfo(String path);
-    public native String nativeArscInfo(String path);
+    // Bindings live in Jni; these wrappers keep the probe body readable.
+    private static String greeting() { return Jni.greeting(); }
+    private static String listDir(String p) { return Jni.listDir(p); }
+    private static String apkInfo(String p) { return Jni.apkInfo(p); }
+    private static String dexInfo(String p) { return Jni.dexInfo(p); }
+    private static String arscInfo(String p) { return Jni.arscInfo(p); }
 }

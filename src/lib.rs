@@ -30,7 +30,7 @@ mod jni_api {
 
     /// `nativeListDir(String path) -> String` (JSON array).
     #[no_mangle]
-    pub extern "system" fn Java_com_mtman_MainActivity_nativeListDir<'a>(
+    pub extern "system" fn Java_com_mtman_Jni_listDir<'a>(
         mut env: JNIEnv<'a>,
         _class: JClass<'a>,
         path: JString<'a>,
@@ -55,7 +55,7 @@ mod jni_api {
 
     /// `nativeApkInfo(String path) -> String` (JSON).
     #[no_mangle]
-    pub extern "system" fn Java_com_mtman_MainActivity_nativeApkInfo<'a>(
+    pub extern "system" fn Java_com_mtman_Jni_apkInfo<'a>(
         mut env: JNIEnv<'a>,
         _class: JClass<'a>,
         path: JString<'a>,
@@ -81,7 +81,7 @@ mod jni_api {
 
     /// `nativeDexInfo(String path) -> String` (JSON).
     #[no_mangle]
-    pub extern "system" fn Java_com_mtman_MainActivity_nativeDexInfo<'a>(
+    pub extern "system" fn Java_com_mtman_Jni_dexInfo<'a>(
         mut env: JNIEnv<'a>,
         _class: JClass<'a>,
         path: JString<'a>,
@@ -109,7 +109,7 @@ mod jni_api {
 
     /// `nativeArscInfo(String path) -> String` (JSON).
     #[no_mangle]
-    pub extern "system" fn Java_com_mtman_MainActivity_nativeArscInfo<'a>(
+    pub extern "system" fn Java_com_mtman_Jni_arscInfo<'a>(
         mut env: JNIEnv<'a>,
         _class: JClass<'a>,
         path: JString<'a>,
@@ -145,7 +145,7 @@ mod jni_api {
 
     /// `nativeGreeting() -> String` — JNI smoke test.
     #[no_mangle]
-    pub extern "system" fn Java_com_mtman_MainActivity_nativeGreeting<'a>(
+    pub extern "system" fn Java_com_mtman_Jni_greeting<'a>(
         env: JNIEnv<'a>,
         _class: JClass<'a>,
     ) -> JString<'a> {

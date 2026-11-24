@@ -49,6 +49,16 @@ public class Probe extends Activity {
                 }
                 out.append("=== done ===");
 
+                // Persist the report: a file is readable from adb even if the
+                // UI is obscured by a system dialog.
+                try {
+                    java.io.File rep = new java.io.File(getExternalFilesDir(null), "report.txt");
+                    java.io.OutputStream os = new java.io.FileOutputStream(rep);
+                    os.write(out.toString().getBytes("UTF-8"));
+                    os.close();
+                } catch (Throwable ignore) {
+                }
+
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {

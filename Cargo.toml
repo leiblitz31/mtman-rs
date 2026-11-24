@@ -1,0 +1,36 @@
+[package]
+name = "mtman"
+version = "0.1.0"
+edition = "2021"
+description = "MT Manager — file manager / APK editor, rewritten in Rust"
+
+[lib]
+name = "mtman"
+path = "src/lib.rs"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+jni = { version = "0.21", default-features = false, optional = true }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+anyhow = "1"
+thiserror = "1"
+log = "0.4"
+flate2 = "1.1"
+env_logger = "0.11"
+
+[features]
+default = []
+android = ["jni"]
+cli = []
+
+[[bin]]
+name = "mtman-cli"
+path = "src/bin/main.rs"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true

@@ -16,46 +16,62 @@ public class Probe extends Activity {
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
-        TextView tv = new TextView(this);
+        final TextView tv = new TextView(this);
         tv.setTextSize(11);
         tv.setPadding(24, 24, 24, 24);
         setContentView(tv);
 
-        String sdcard = getExternalFilesDir(null) != null
+        final String sdcard = getExternalFilesDir(null) != null
                 ? getExternalFilesDir(null).getAbsolutePath() : "/sdcard";
-        String apk = getPackageCodePath();
+        final String apk = getPackageCodePath();
+        final java.io.File dex = asset("classes.dex");
+        final java.io.File arsc = asset("resources.arsc");
 
-        line(tv, "=== greeting ===");
-        try { line(tv, greeting()); } catch (Throwable t) { line(tv, "ERR " + t); }
+        line(tv, "MTMAN PROBE — running...");
+        // All calls block; keep them off the main thread or the UI ANRs.
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                final StringBuilder out = new StringBuilder();
+                step(out, "greeting", new Call() { public String get() { return greeting(); } });
+                step(out, "listDir " + sdcard, new Call() { public String get() { return listDir(sdcard); } });
+                step(out, "listDir /sdcard", new Call() { public String get() { return listDir("/sdcard"); } });
+                step(out, "apkInfo (self)", new Call() { public String get() { return apkInfo(apk); } });
+                if (dex != null) {
+                    step(out, "dexInfo", new Call() { public String get() { return dexInfo(dex.getAbsolutePath()); } });
+                } else {
+                    out.append("dexInfo: not staged\n");
+                }
+                if (arsc != null) {
+                    step(out, "arscInfo", new Call() { public String get() { return arscInfo(arsc.getAbsolutePath()); } });
+                } else {
+                    out.append("arscInfo: not staged\n");
+                }
+                out.append("=== done ===");
 
-        line(tv, "=== listDir " + sdcard + " ===");
-        try { line(tv, listDir(sdcard)); } catch (Throwable t) { line(tv, "ERR " + t); }
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        tv.setText(out.toString());
+                    }
+                });
+            }
+        }).start();
+    }
 
-        line(tv, "=== listDir /sdcard ===");
-        try { line(tv, listDir("/sdcard")); } catch (Throwable t) { line(tv, "ERR " + t); }
+    private interface Call { String get(); }
 
-        line(tv, "=== apkInfo (self) ===");
-        try { line(tv, apkInfo(apk)); } catch (Throwable t) { line(tv, "ERR " + t); }
-
-        java.io.File dex = asset("classes.dex");
-        line(tv, "=== dexInfo ===");
-        if (dex != null) {
-            try { line(tv, dexInfo(dex.getAbsolutePath())); } catch (Throwable t) { line(tv, "ERR " + t); }
-        } else {
-            line(tv, "classes.dex not found in " + getExternalFilesDir(null));
+    private void step(StringBuilder out, String label, Call c) {
+        long t0 = System.currentTimeMillis();
+        String r;
+        try {
+            r = c.get();
+        } catch (Throwable t) {
+            r = "ERR " + t;
         }
-
-        java.io.File arsc = asset("resources.arsc");
-        line(tv, "=== arscInfo ===");
-        if (arsc != null) {
-            try { line(tv, arscInfo(arsc.getAbsolutePath())); } catch (Throwable t) { line(tv, "ERR " + t); }
-        } else {
-            line(tv, "resources.arsc not found in " + getExternalFilesDir(null));
-        }
-
-        line(tv, "=== done ===");
-        sb.insert(0, "MTMAN PROBE\n");
-        tv.setText(sb.toString());
+        long ms = System.currentTimeMillis() - t0;
+        out.append("--- ").append(label).append(" (").append(ms).append(" ms)\n")
+           .append(r).append('\n');
     }
 
     private void line(TextView tv, String s) {

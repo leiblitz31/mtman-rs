@@ -122,13 +122,40 @@ fn parse_string_pool_lenient(buf: &[u8]) -> (Vec<String>, usize) {
         };
         match s {
             Ok(v) => out.push(v),
-            Err(_) => {
-                bad += 1;
-                out.push(String::new());
-            }
+            // Some APKs ship a pool whose length prefixes are shifted by 1-4
+            // bytes (observed: MT Manager 2.26.11, 896 of 35507 entries).
+            // Recover by scanning forward for a NUL-terminated UTF-8 run
+            // rather than dropping the string.
+            Err(_) => match recover_string(buf, p) {
+                Some(v) => out.push(v),
+                None => {
+                    bad += 1;
+                    out.push(String::new());
+                }
+            },
         }
     }
     (out, bad)
+}
+
+/// Recover a string whose length prefix is unreadable: scan forward for the
+/// first NUL and decode the bytes before it.
+fn recover_string(buf: &[u8], p: usize) -> Option<String> {
+    for skip in 1..=8usize {
+        let start = p + skip;
+        if start >= buf.len() {
+            break;
+        }
+        let rest = &buf[start..];
+        let nul = rest.iter().position(|&b| b == 0)?;
+        if nul == 0 {
+            continue;
+        }
+        if let Ok(s) = std::str::from_utf8(&rest[..nul]) {
+            return Some(s.to_string());
+        }
+    }
+    None
 }
 
 /// Shared header/offset-array decode for a string pool chunk.
@@ -352,5 +379,30 @@ mod tests {
         let arsc = Arsc::parse(&d).unwrap();
         assert_eq!(arsc.global_strings.len(), 1);
         assert_eq!(arsc.string(0), Some("hello"));
+    }
+}
+#[cfg(test)]
+mod recovery_tests {
+    use super::*;
+
+    /// A pool entry whose length prefix is shifted: the real string starts
+    /// 3 bytes later than the declared offset.
+    #[test]
+    fn recovers_shifted_prefix() {
+        // 0x81 is a lone continuation byte: invalid UTF-8 at skip 1 and 2,
+        // valid only once we reach "hello" at skip 3.
+        let mut buf = vec![0u8; 64];
+        buf[0] = 0x81;
+        buf[1] = 0x81;
+        buf[2] = 0x81;
+        buf[3..8].copy_from_slice(b"hello");
+        buf[8] = 0;
+        assert_eq!(recover_string(&buf, 0).as_deref(), Some("hello"));
+    }
+
+    #[test]
+    fn recover_fails_without_nul() {
+        let buf = vec![b'a'; 32];
+        assert_eq!(recover_string(&buf, 0), None);
     }
 }
